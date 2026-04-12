@@ -40,6 +40,8 @@ export default function Article({ article }) {
 
   if (!article) return <div className="art-page"><div className="loading">// 404</div></div>
 
+  const content = t(article.content, lang)
+
   return (
     <>
       <Head>
@@ -60,7 +62,7 @@ export default function Article({ article }) {
           <h1 className="art-title">{t(article.title, lang)}</h1>
           <p className="art-lede">{t(article.lede, lang)}</p>
           <div className="art-content">
-            {renderMarkdown(article.content)}
+            {renderMarkdown(content)}
           </div>
           <div className="art-end">
             <span>Chien-Po</span>
