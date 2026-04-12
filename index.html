@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #06040e; --text: #e0d8f0; --dim: #5a4020;
+  --faint: #1a1204; --neon: #ff8800; --neon2: #ff2200; --neon3: #ffcc00;
+  --grid: rgba(255,136,0,0.04);
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --mono: 'Share Tech Mono', monospace;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--serif); min-height: 100vh; }
+.grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 48px 48px; }
+.scanlines { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px); }
+.page { display: none; }
+.page.on { display: block; }
+
+/* ── HOME ── */
+.nav { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2.5rem; border-bottom: 1px solid var(--faint); }
+.logo { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--neon); text-shadow: 0 0 14px color-mix(in srgb, var(--neon) 50%, transparent); }
+.nav-r { display: flex; align-items: center; gap: 1.25rem; font-family: var(--mono); font-size: 10px; color: var(--dim); letter-spacing: 0.1em; }
+.nav-about { cursor: pointer; }
+.lang-toggle { cursor: pointer; border: 1px solid var(--faint); border-radius: 3px; padding: 3px 8px; font-family: var(--mono); font-size: 10px; color: var(--dim); background: transparent; letter-spacing: 0.08em; transition: all 0.2s; }
+.lang-toggle:hover { border-color: var(--neon); color: var(--neon); }
+.wrap { max-width: 700px; margin: 0 auto; padding: 4.5rem 2.5rem; position: relative; z-index: 10; }
+.eyebrow { font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); margin-bottom: 1.75rem; }
+.eyebrow span { color: var(--neon); opacity: 0.6; }
+.glitch-wrap { position: relative; margin-bottom: 2rem; display: inline-block; }
+.g-title { font-size: 52px; font-weight: 400; line-height: 1.1; letter-spacing: -0.03em; color: var(--text); }
+.g-r, .g-b { position: absolute; top: 0; left: 0; pointer-events: none; font-family: var(--serif); font-size: 52px; font-weight: 400; line-height: 1.1; letter-spacing: -0.03em; width: 100%; }
+.g-r { color: var(--neon2); mix-blend-mode: screen; animation: gr 3s infinite; }
+.g-b { color: var(--neon3); mix-blend-mode: screen; animation: gb 3s infinite; }
+@keyframes gr { 0%,45%,51%,100%{transform:translate(0);opacity:0;clip-path:none;} 46%{transform:translate(-12px,2px);opacity:.85;clip-path:polygon(0 15%,100% 15%,100% 30%,0 30%);} 47%{transform:translate(8px,-1px);opacity:.85;clip-path:polygon(0 50%,100% 50%,100% 65%,0 65%);} 48%{transform:translate(-6px,3px);opacity:.7;clip-path:polygon(0 70%,100% 70%,100% 85%,0 85%);} 49%{transform:translate(10px,-2px);opacity:.85;clip-path:polygon(0 5%,100% 5%,100% 20%,0 20%);} 50%{transform:translate(0);opacity:0;} }
+@keyframes gb { 0%,45%,51%,100%{transform:translate(0);opacity:0;clip-path:none;} 46%{transform:translate(14px,-2px);opacity:.8;clip-path:polygon(0 25%,100% 25%,100% 45%,0 45%);} 47%{transform:translate(-10px,1px);opacity:.8;clip-path:polygon(0 55%,100% 55%,100% 75%,0 75%);} 48%{transform:translate(8px,-3px);opacity:.65;clip-path:polygon(0 80%,100% 80%,100% 95%,0 95%);} 49%{transform:translate(-12px,2px);opacity:.8;clip-path:polygon(0 0%,100% 0%,100% 15%,0 15%);} 50%{transform:translate(0);opacity:0;} }
+.sub { font-family: var(--mono); font-size: 14px; color: var(--dim); line-height: 1.9; letter-spacing: 0.05em; border-left: 1px solid var(--faint); padding-left: 1.25rem; margin-bottom: 4rem; max-width: 44ch; }
+.sub b { color: var(--neon); opacity: 0.7; font-weight: normal; }
+.rule { border: none; border-top: 1px solid var(--faint); margin-bottom: 2rem; }
+.idx-label { font-family: var(--mono); font-size: 9px; color: var(--dim); opacity: 0.5; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 1.25rem; }
+.entry { display: grid; grid-template-columns: 3rem 1fr; gap: 1.25rem; padding: 1.1rem 0; border-top: 1px solid var(--faint); cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.entry::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--neon); opacity: 0; transition: opacity 0.2s; }
+.entry::after { content: ''; position: absolute; left: -100%; top: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(255,136,0,0.06) 50%, transparent 100%); pointer-events: none; }
+.entry:hover::before { opacity: 1; }
+.entry:hover { padding-left: 0.75rem; background: rgba(255,255,255,0.02); }
+.entry:hover::after { animation: scanswipe 0.4s ease-out forwards; }
+.entry:hover .et { color: var(--neon); text-shadow: 0 0 12px color-mix(in srgb, var(--neon) 40%, transparent); }
+.entry:hover .en { color: var(--neon); opacity: 0.8; }
+@keyframes scanswipe { from{left:-100%} to{left:100%} }
+.en { font-family: var(--mono); font-size: 9px; color: var(--faint); padding-top: 3px; transition: color 0.2s; }
+.em { font-family: var(--mono); font-size: 9px; color: var(--dim); opacity: 0.6; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.et { font-size: 19px; font-weight: 400; line-height: 1.3; letter-spacing: -0.01em; color: var(--text); margin-bottom: 0.3rem; transition: color 0.2s, text-shadow 0.2s; }
+.ex { font-size: 14px; font-style: italic; color: var(--dim); line-height: 1.65; opacity: 0.7; }
+.footer { margin-top: 4rem; font-family: var(--mono); font-size: 9px; color: var(--faint); letter-spacing: 0.1em; display: flex; justify-content: space-between; border-top: 1px solid var(--faint); padding-top: 1rem; }
+.about-section { margin-top: 5rem; padding-top: 3rem; border-top: 1px solid var(--faint); }
+.about-kicker { font-family: var(--mono); font-size: 9px; color: var(--dim); opacity: 0.4; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 1.5rem; }
+.about-line1 { font-size: 22px; font-weight: 400; color: var(--text); line-height: 1.5; margin-bottom: 1.25rem; letter-spacing: -0.01em; }
+.about-line2 { font-family: var(--mono); font-size: 13px; color: var(--dim); line-height: 1.9; letter-spacing: 0.04em; }
+
+/* ── ARTICLE ── */
+#page-article { background: #0e0c12; color: #c8c0b4; font-family: 'EB Garamond', Georgia, serif; min-height: 100vh; }
+.art-nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2.5rem; border-bottom: 1px solid #1e1a22; background: #0e0c12; position: sticky; top: 0; z-index: 10; }
+.art-back { font-family: var(--mono); font-size: 10px; color: #4a4050; letter-spacing: 0.1em; cursor: pointer; transition: color 0.2s; }
+.art-back:hover { color: #8a7878; }
+.art-logo { font-family: var(--mono); font-size: 10px; color: #2e2a34; letter-spacing: 0.14em; text-transform: uppercase; }
+.art-body { max-width: 680px; margin: 0 auto; padding: 4rem 2rem 7rem; }
+.art-meta { font-family: var(--mono); font-size: 10px; color: #4a4050; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 1.5rem; }
+.art-title { font-size: 38px; font-weight: 400; line-height: 1.18; letter-spacing: -0.02em; color: #d8d0c8; margin-bottom: 1.25rem; }
+.art-lede { font-size: 19px; font-style: italic; color: #7a7068; line-height: 1.7; padding-bottom: 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid #1e1a22; }
+.art-content p { font-size: 16px; line-height: 1.8; color: #b0a898; margin-bottom: 1.5rem; }
+.art-content h2 { font-family: 'EB Garamond', Georgia, serif; font-size: 24px; font-weight: 500; color: #c8c0b4; line-height: 1.3; margin: 2.5rem 0 1rem; letter-spacing: -0.01em; }
+.art-content blockquote { border-left: 2px solid #2e2a34; margin: 2rem 0; padding: 0.25rem 0 0.25rem 1.5rem; }
+.art-content blockquote p { font-size: 19px; font-style: italic; color: #6a6260; margin-bottom: 0; }
+.art-content blockquote p::first-letter { font-size: inherit; float: none; line-height: inherit; margin: 0; color: inherit; }
+.art-end { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid #1e1a22; font-family: var(--mono); font-size: 10px; color: #3a3440; letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+
+/* ── ADMIN ── */
+.admin-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.admin-overlay.open { opacity: 1; pointer-events: all; }
+.admin-panel { position: fixed; top: 0; right: -540px; bottom: 0; width: 520px; z-index: 201; background: #0a0806; border-left: 1px solid #2a1a08; overflow-y: auto; transition: right 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+.admin-panel.open { right: 0; }
+.admin-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #1a1208; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #0a0806; z-index: 10; }
+.admin-title { font-family: var(--mono); font-size: 11px; color: var(--neon); letter-spacing: 0.14em; text-transform: uppercase; }
+.admin-close { font-family: var(--mono); font-size: 11px; color: #444; cursor: pointer; padding: 4px 8px; border: 1px solid #1a1208; border-radius: 3px; background: transparent; transition: all 0.15s; }
+.admin-close:hover { color: var(--neon); border-color: var(--neon); }
+.admin-body { padding: 1.5rem; flex: 1; }
+.admin-section { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #150f06; }
+.admin-section:last-child { border-bottom: none; }
+.admin-section-title { font-family: var(--mono); font-size: 9px; color: #3a2810; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1rem; }
+.field { margin-bottom: 0.75rem; }
+.field label { display: block; font-family: var(--mono); font-size: 9px; color: #3a2810; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.35rem; }
+.field input, .field textarea { width: 100%; background: #060402; color: #c8b898; border: 1px solid #1a1208; border-radius: 3px; padding: 0.55rem 0.75rem; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; outline: none; transition: border-color 0.2s; resize: vertical; line-height: 1.6; }
+.field input:focus, .field textarea:focus { border-color: #3a2010; }
+.field textarea { min-height: 55px; }
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+.field-pair .field { margin-bottom: 0; }
+.lang-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; padding: 1px 6px; border-radius: 2px; margin-bottom: 0.3rem; display: inline-block; }
+.lang-zh { background: #1a1208; color: #5a3810; }
+.lang-en { background: #0a1020; color: #304060; }
+.admin-article { background: #080604; border: 1px solid #150f06; border-radius: 4px; padding: 0.9rem; margin-bottom: 0.75rem; }
+.admin-article-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.admin-article-num { font-family: var(--mono); font-size: 9px; color: #2a1c08; }
+.admin-article-del { font-family: var(--mono); font-size: 9px; color: #3a1010; cursor: pointer; padding: 2px 6px; border: 1px solid #2a1010; border-radius: 2px; background: transparent; transition: all 0.15s; }
+.admin-article-del:hover { color: #ff3333; border-color: #ff3333; }
+.art-field-group { margin-bottom: 0.6rem; }
+.art-field-group label { font-family: var(--mono); font-size: 9px; color: #2a1c08; letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 0.3rem; }
+.art-field-group input, .art-field-group textarea { width: 100%; background: #060402; color: #c8b898; border: 1px solid #1a1208; border-radius: 3px; padding: 0.4rem 0.6rem; font-family: var(--mono); font-size: 11px; outline: none; transition: border-color 0.2s; resize: vertical; line-height: 1.6; }
+.art-field-group input:focus, .art-field-group textarea:focus { border-color: #3a2010; }
+.art-field-group textarea { min-height: 100px; }
+.art-lang-block { border: 1px solid #150f06; border-radius: 3px; padding: 0.6rem; margin-bottom: 0.5rem; }
+.art-lang-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px; }
+.btn-add { width: 100%; padding: 0.65rem; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px dashed #2a1a08; border-radius: 3px; background: transparent; color: #3a2810; cursor: pointer; transition: all 0.15s; margin-top: 0.5rem; }
+.btn-add:hover { border-color: var(--neon); color: var(--neon); }
+.btn-save { width: 100%; padding: 0.85rem; font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; background: var(--neon); color: #050300; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; transition: all 0.2s; margin-top: 1.5rem; }
+.btn-save:hover { background: #ffaa22; }
+.save-hint { font-family: var(--mono); font-size: 9px; color: #2a1c08; text-align: center; margin-top: 0.5rem; letter-spacing: 0.08em; }
+.admin-hint { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 50; font-family: var(--mono); font-size: 9px; color: #1a1208; letter-spacing: 0.1em; cursor: pointer; padding: 6px 10px; border: 1px solid #1a1208; border-radius: 3px; transition: all 0.2s; display: none; }
+.admin-hint:hover { color: var(--neon); border-color: var(--neon); }
+.saved-flash { position: fixed; bottom: 4rem; left: 50%; transform: translateX(-50%); background: var(--neon); color: #050300; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; padding: 0.5rem 1.25rem; border-radius: 3px; opacity: 0; pointer-events: none; z-index: 300; transition: opacity 0.3s; }
+.saved-flash.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="scanlines"></div>
+
+<!-- HOME -->
+<div id="page-home" class="page on">
+  <nav class="nav">
+    <span class="logo" id="logo-el"></span>
+    <div class="nav-r">
+      <span>// </span>
+      <span class="nav-about" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})" id="nav-about-el">關於</span>
+      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
+    </div>
+  </nav>
+  <div class="wrap">
+    <div class="eyebrow" id="eyebrow-el"></div>
+    <div class="glitch-wrap">
+      <div class="g-r" id="gr-el" aria-hidden="true"></div>
+      <div class="g-b" id="gb-el" aria-hidden="true"></div>
+      <h1 class="g-title" id="gtitle-el"></h1>
+    </div>
+    <p class="sub" id="sub-el"></p>
+    <hr class="rule">
+    <div class="idx-label" id="idx-label-el">// 文章索引</div>
+    <div id="entries-wrap"></div>
+    <div class="footer">
+      <span id="footer-left-el"></span>
+      <span>TRANSMISSION · ONGOING</span>
+    </div>
+    <div id="about" class="about-section">
+      <div class="about-kicker">// 關於</div>
+      <p class="about-line1">I write to think, not to conclude.</p>
+      <p class="about-line2" id="about-body-el"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLE -->
+<div id="page-article" class="page">
+  <div class="art-nav">
+    <span class="art-back" id="art-back-el" onclick="goHome()">← 返回</span>
+    <span class="art-logo" id="art-logo-el"></span>
+  </div>
+  <div class="art-body">
+    <div class="art-meta" id="art-meta"></div>
+    <h1 class="art-title" id="art-title"></h1>
+    <p class="art-lede" id="art-lede"></p>
+    <div class="art-content" id="art-content"></div>
+    <div class="art-end">
+      <span id="art-footer-name"></span>
+      <span id="art-date"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Admin -->
+<div class="admin-hint" id="admin-hint" onclick="openAdmin()">⚙ 編輯</div>
+<div class="admin-overlay" id="overlay" onclick="closeAdmin()"></div>
+<div class="admin-panel" id="panel">
+  <div class="admin-header">
+    <span class="admin-title">// 網站編輯器</span>
+    <button class="admin-close" onclick="closeAdmin()">關閉 ✕</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-section">
+      <div class="admin-section-title">網站基本資訊</div>
+      <div class="field"><label>Logo</label><input id="f-logo" type="text"></div>
+      <div class="field-pair">
+        <div class="field"><span class="lang-tag lang-zh">中文</span><br><label>眉標</label><input id="f-eyebrow-zh" type="text"></div>
+        <div class="field"><span class="lang-tag lang-en">EN</span><br><label>Eyebrow</label><input id="f-eyebrow-en" type="text"></div>
+      </div>
+      <div class="field-pair">
+        <div class="field"><span class="lang-tag lang-zh">中文</span><br><label>大標題（\n 換行）</label><textarea id="f-title-zh" rows="2"></textarea></div>
+        <div class="field"><span class="lang-tag lang-en">EN</span><br><label>Title (\n line break)</label><textarea id="f-title-en" rows="2"></textarea></div>
+      </div>
+      <div class="field-pair">
+        <div class="field"><span class="lang-tag lang-zh">中文</span><br><label>副標語（\n 換行）</label><textarea id="f-sub-zh" rows="3"></textarea></div>
+        <div class="field"><span class="lang-tag lang-en">EN</span><br><label>Subtitle (\n line break)</label><textarea id="f-sub-en" rows="3"></textarea></div>
+      </div>
+      <div class="field-pair">
+        <div class="field"><span class="lang-tag lang-zh">中文</span><br><label>關於內文</label><textarea id="f-about-zh" rows="2"></textarea></div>
+        <div class="field"><span class="lang-tag lang-en">EN</span><br><label>About body</label><textarea id="f-about-en" rows="2"></textarea></div>
+      </div>
+      <div class="field"><label>頁尾署名</label><input id="f-footer" type="text"></div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-title">文章管理</div>
+      <div id="admin-articles"></div>
+      <button class="btn-add" onclick="addArticle()">＋ 新增文章</button>
+    </div>
+    <button class="btn-save" onclick="saveAll()">儲存並更新網站</button>
+    <p class="save-hint">資料存在瀏覽器，下次開啟自動載入</p>
+  </div>
+</div>
+<div class="saved-flash" id="flash">已儲存 ✓</div>
+
+<script>
+const DEFAULT = {
+  logo: 'Chien-Po · Dispatches',
+  eyebrow: { zh: 'FREQUENCY · 2026 · 持續傳輸中', en: 'FREQUENCY · 2026 · ONGOING' },
+  title: { zh: '人、科技，\n與我們之間的一切', en: 'People, Technology,\nand Everything Between' },
+  sub: { zh: '關於存在、選擇，\n與我們如何在科技時代\n仍試圖成為人。', en: 'On existence, choice,\nand the act of becoming.' },
+  about: { zh: '這裡有科技、行銷、人性，以及它們交叉的地方。<br>沒有標準答案，只有持續的提問。', en: 'Technology, marketing, human nature, and where they intersect.<br>No definitive answers. Only better questions.' },
+  footer: 'Chien-Po',
+  articles: [
+    {
+      date: '2026.04',
+      cat: { zh: '方法論', en: 'Methodology' },
+      title: { zh: '當研究者遺忘了問題的本質', en: 'When Researchers Forget the Question Itself' },
+      lede: { zh: '我們花了太多時間在選擇量表，卻忘記問自己：這個構念真的存在於現實之中嗎？', en: 'We spend too much time selecting scales, forgetting to ask whether the construct even exists in reality.' },
+      content: { zh: '有一種學術上常見的迷路，不是找不到方向，而是走得太快、太熟練，以至於忘記了出發的理由。\n\n## 方法服務問題\n\n問題往往從研究問題本身開始。當我們問「X 是否影響 Y」的時候，我們暗中預設了 X 和 Y 都是穩定存在的實體。\n\n> 方法是為了服務問題，而不是反過來。\n\n當我們讓問題配合已有的量表，我們就做了一個很深的哲學選擇，只是通常沒有意識到。', en: 'There is a common kind of academic lostness — not failing to find direction, but moving too fast, too fluently, until the original reason for the journey is forgotten.\n\n## Method Serves the Question\n\nThe problem often starts with the research question itself. When we ask whether X affects Y, we implicitly assume both X and Y are stable, measurable entities.\n\n> Method exists to serve the question, not the other way around.\n\nWhen we let questions conform to existing scales, we have already made a deep philosophical choice — we just rarely acknowledge it.' }
+    },
+    {
+      date: '2026.03',
+      cat: { zh: '身份認同', en: 'Identity' },
+      title: { zh: 'Prop Firm 的通關與自我的裂解', en: 'Passing the Challenge and the Fracture of Self' },
+      lede: { zh: '每一次爆倉都是一則關於人性的短篇故事。問題是，我們很少停下來讀它。', en: 'Every blown account is a short story about human nature. The problem is we rarely stop to read it.' },
+      content: { zh: '通過 Prop Firm 的挑戰，你以為你贏了。但贏的是什麼？\n\n## 身份的轉移\n\n一個帳號數字的改變，不會改變你做決策的神經迴路。\n\n> 通關不是終點。它只是讓你看清楚，你是誰。\n\n真正的問題不是你能不能通關，而是通關之後，你準備好成為一個不同的人了嗎？', en: 'You passed the Prop Firm challenge. You think you won. But what exactly did you win?\n\n## The Shift in Identity\n\nChanging the number in your account does not change the neural circuits that drive your decisions.\n\n> Passing is not the end. It is merely the moment you see clearly who you are.\n\nThe real question is not whether you can pass — it is whether you are ready to become someone different afterward.' }
+    },
+    {
+      date: '2026.02',
+      cat: { zh: '認識論', en: 'Epistemology' },
+      title: { zh: '不確定性作為方法', en: 'Uncertainty as Method' },
+      lede: { zh: '接受不知道，是一種紀律，而非失敗。', en: 'Accepting not-knowing is a discipline, not a failure.' },
+      content: { zh: '大部分人把不確定性當成問題。我越來越覺得，它是一種工具。\n\n> 接受不知道，才能真正開始知道。\n\n不確定性不是要被消除的噪音——它是訊號本身。', en: 'Most people treat uncertainty as a problem to be solved. I increasingly think it is a tool.\n\n> Accepting not-knowing is where real knowing begins.\n\nUncertainty is not noise to be eliminated — it is the signal itself.' }
+    },
+    {
+      date: '2026.01',
+      cat: { zh: '交易心理', en: 'Trading Psychology' },
+      title: { zh: '盈利之後的空洞', en: 'The Void After Profit' },
+      lede: { zh: '達到目標之後的靜止感，比失敗更難處理。', en: 'The stillness after reaching a goal is harder to handle than failure.' },
+      content: { zh: '你設了一個目標，然後你達到了。然後呢？\n\n> 我們追的不是結果。我們追的是追逐本身。\n\n這不是問題，這是人性。承認它，比假裝它不存在更有用。', en: 'You set a goal. You reached it. Now what?\n\n> We are not chasing the outcome. We are chasing the chase itself.\n\nThis is not a problem. It is human nature. Acknowledging it is more useful than pretending otherwise.' }
+    }
+  ]
+};
+
+function parseMarkdown(text) {
+  if (!text) return '<p>（尚無內容）</p>';
+  return text.split(/\n\n+/).map(block => {
+    block = block.trim();
+    if (!block) return '';
+    if (block.startsWith('## ')) return `<h2>${block.slice(3)}</h2>`;
+    if (block.startsWith('> ')) return `<blockquote><p>${block.slice(2)}</p></blockquote>`;
+    return `<p>${block.replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('site_data'));
+    if (!saved) return DEFAULT;
+    const articles = (saved.articles||[]).map((a,i)=>({...(DEFAULT.articles[i]||{}),...a}));
+    return {...DEFAULT,...saved,articles};
+  } catch(e) { return DEFAULT; }
+}
+function save(data) { localStorage.setItem('site_data', JSON.stringify(data)); }
+
+let currentData = null;
+let currentLang = localStorage.getItem('site_lang') || 'zh';
+
+function t(obj) {
+  if (typeof obj === 'string') return obj;
+  return obj?.[currentLang] || obj?.zh || '';
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('site_lang', currentLang);
+  document.getElementById('lang-btn').textContent = currentLang === 'zh' ? 'EN' : '中';
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-TW' : 'en';
+  render(currentData);
+}
+
+function goHome() {
+  document.getElementById('page-article').classList.remove('on');
+  document.getElementById('page-home').classList.add('on');
+  window.scrollTo(0,0);
+}
+
+function openArticle(i) {
+  const a = currentData.articles[i];
+  if (!a) return;
+  document.getElementById('art-meta').textContent = `${a.date} · ${t(a.cat)}`;
+  document.getElementById('art-title').textContent = t(a.title);
+  document.getElementById('art-lede').textContent = t(a.lede);
+  document.getElementById('art-content').innerHTML = parseMarkdown(t(a.content));
+  document.getElementById('art-footer-name').textContent = currentData.footer;
+  document.getElementById('art-date').textContent = a.date;
+  document.getElementById('art-logo-el').textContent = currentData.logo;
+  document.getElementById('art-back-el').textContent = currentLang === 'zh' ? '← 返回' : '← Back';
+  document.getElementById('page-home').classList.remove('on');
+  document.getElementById('page-article').classList.add('on');
+  window.scrollTo(0,0);
+}
+
+function render(data) {
+  currentData = data;
+  const isEN = currentLang === 'en';
+  document.getElementById('logo-el').textContent = data.logo;
+  document.getElementById('lang-btn').textContent = isEN ? '中' : 'EN';
+  const ep = t(data.eyebrow).split('·').map(s=>s.trim());
+  document.getElementById('eyebrow-el').innerHTML = ep.map((p,i)=>i===ep.length-1?`<span>${p}</span>`:p).join(' · ');
+  const th = t(data.title).replace(/\n/g,'<br>');
+  ['gtitle-el','gr-el','gb-el'].forEach(id=>document.getElementById(id).innerHTML=th);
+  const sp = t(data.sub).split('\n');
+  document.getElementById('sub-el').innerHTML = sp.map((l,i)=>i===sp.length-1?`<b>${l}</b>`:l).join('<br>');
+  document.getElementById('footer-left-el').textContent = data.footer;
+  document.getElementById('nav-about-el').textContent = isEN ? 'About' : '關於';
+  document.getElementById('idx-label-el').textContent = isEN ? '// Articles' : '// 文章索引';
+  document.getElementById('about-body-el').innerHTML = t(data.about);
+  document.getElementById('entries-wrap').innerHTML = data.articles.map((a,i)=>`
+    <div class="entry" onclick="openArticle(${i})">
+      <div class="en">${String(i+1).padStart(3,'0')}</div>
+      <div>
+        <div class="em">${a.date} · ${t(a.cat)}</div>
+        <div class="et">${t(a.title)}</div>
+        <div class="ex">${t(a.lede)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAdmin(data) {
+  document.getElementById('f-logo').value       = data.logo;
+  document.getElementById('f-eyebrow-zh').value = data.eyebrow?.zh||'';
+  document.getElementById('f-eyebrow-en').value = data.eyebrow?.en||'';
+  document.getElementById('f-title-zh').value   = data.title?.zh||'';
+  document.getElementById('f-title-en').value   = data.title?.en||'';
+  document.getElementById('f-sub-zh').value     = data.sub?.zh||'';
+  document.getElementById('f-sub-en').value     = data.sub?.en||'';
+  document.getElementById('f-about-zh').value   = (data.about?.zh||'').replace(/<br>/g,'\n');
+  document.getElementById('f-about-en').value   = (data.about?.en||'').replace(/<br>/g,'\n');
+  document.getElementById('f-footer').value     = data.footer;
+  document.getElementById('admin-articles').innerHTML = data.articles.map((a,i)=>`
+    <div class="admin-article">
+      <div class="admin-article-header">
+        <span class="admin-article-num"># ${String(i+1).padStart(3,'0')}</span>
+        <button class="admin-article-del" onclick="delArticle(${i})">刪除</button>
+      </div>
+      <div class="art-field-group"><label>日期</label><input type="text" value="${a.date||''}"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0.5rem">
+        <div class="art-field-group"><span class="lang-tag lang-zh">中文</span><label>分類</label><input type="text" value="${a.cat?.zh||''}"></div>
+        <div class="art-field-group"><span class="lang-tag lang-en">EN</span><label>Category</label><input type="text" value="${a.cat?.en||''}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0.5rem">
+        <div class="art-field-group"><span class="lang-tag lang-zh">中文</span><label>標題</label><input type="text" value="${(a.title?.zh||'').replace(/"/g,'&quot;')}"></div>
+        <div class="art-field-group"><span class="lang-tag lang-en">EN</span><label>Title</label><input type="text" value="${(a.title?.en||'').replace(/"/g,'&quot;')}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0.5rem">
+        <div class="art-field-group"><span class="lang-tag lang-zh">中文</span><label>摘要</label><input type="text" value="${(a.lede?.zh||'').replace(/"/g,'&quot;')}"></div>
+        <div class="art-field-group"><span class="lang-tag lang-en">EN</span><label>Lede</label><input type="text" value="${(a.lede?.en||'').replace(/"/g,'&quot;')}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="art-field-group"><span class="lang-tag lang-zh">中文</span><label>內文</label><textarea>${a.content?.zh||''}</textarea></div>
+        <div class="art-field-group"><span class="lang-tag lang-en">EN</span><label>Content</label><textarea>${a.content?.en||''}</textarea></div>
+      </div>
+    </div>`).join('');
+}
+
+function collect() {
+  const articles = [];
+  document.querySelectorAll('#admin-articles .admin-article').forEach(el=>{
+    const inputs = el.querySelectorAll('input');
+    const tas = el.querySelectorAll('textarea');
+    articles.push({
+      date: inputs[0].value,
+      cat:  { zh:inputs[1].value, en:inputs[2].value },
+      title:{ zh:inputs[3].value, en:inputs[4].value },
+      lede: { zh:inputs[5].value, en:inputs[6].value },
+      content:{ zh:tas[0]?tas[0].value:'', en:tas[1]?tas[1].value:'' }
+    });
+  });
+  return {
+    logo:    document.getElementById('f-logo').value,
+    eyebrow: { zh:document.getElementById('f-eyebrow-zh').value, en:document.getElementById('f-eyebrow-en').value },
+    title:   { zh:document.getElementById('f-title-zh').value, en:document.getElementById('f-title-en').value },
+    sub:     { zh:document.getElementById('f-sub-zh').value, en:document.getElementById('f-sub-en').value },
+    about:   { zh:document.getElementById('f-about-zh').value.replace(/\n/g,'<br>'), en:document.getElementById('f-about-en').value.replace(/\n/g,'<br>') },
+    footer:  document.getElementById('f-footer').value,
+    articles
+  };
+}
+
+function addArticle() {
+  const d=collect();
+  d.articles.push({date:'2026.',cat:{zh:'',en:''},title:{zh:'',en:''},lede:{zh:'',en:''},content:{zh:'',en:''}});
+  renderAdmin(d);
+  document.getElementById('admin-articles').lastElementChild?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function delArticle(i){const d=collect();d.articles.splice(i,1);renderAdmin(d);}
+function saveAll(){
+  const d=collect();save(d);render(d);
+  const f=document.getElementById('flash');f.classList.add('show');setTimeout(()=>f.classList.remove('show'),1800);
+}
+
+const ADMIN_PW='lcp2025';
+function openAdmin(){
+  const pw=prompt('// 請輸入編輯密碼');
+  if(!pw||pw!==ADMIN_PW){if(pw!==null)alert('密碼錯誤');return;}
+  renderAdmin(load());
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+function closeAdmin(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+document.addEventListener('keydown',e=>{if(e.shiftKey&&e.key==='E')openAdmin();});
+if(location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname===''){
+  document.getElementById('admin-hint').style.display='block';
+}
+render(load());
+</script>
+</body>
+</html>
