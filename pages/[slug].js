@@ -68,6 +68,18 @@ export default function Article({ article }) {
             <span>Chien-Po</span>
             <span>{article.date}</span>
           </div>
+          <div className="art-subscribe">
+            <a
+              className="art-subscribe-link"
+              href="https://liaochienpo.substack.com/subscribe"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {lang === 'zh'
+                ? '我想知道更多，請寄給我 →'
+                : 'I want more — send them to me →'}
+            </a>
+          </div>
         </div>
       </div>
     </>
