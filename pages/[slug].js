@@ -1,85 +1,187 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { getArticleBySlug, getAllSlugs } from '../lib/notion'
+import { getArticleBySlug, getAllSlugs, getArticles } from '../lib/notion'
+import { renderMarkdown, extractHeadings, readingMinutes, plain } from '../lib/markdown'
+import { usePrefs } from '../lib/prefs'
+import Controls from '../components/Controls'
 
 const LOGO = 'Chien-Po · Dispatches'
+const SUBSCRIBE = 'https://liaochienpo.substack.com/subscribe'
+
+const UI = {
+  zh: {
+    back: '← 全部文章',
+    toc: '目錄',
+    minutes: n => `約 ${n} 分鐘`,
+    newer: '較新一篇',
+    older: '較早一篇',
+    subscribe: '我想知道更多，請寄給我 →',
+    top: '回到頂端',
+    zhOnly: null,
+  },
+  en: {
+    back: '← All writing',
+    toc: 'Contents',
+    minutes: n => `${n} min read`,
+    newer: 'Newer',
+    older: 'Earlier',
+    subscribe: 'I want more — send them to me →',
+    top: 'Back to top',
+    zhOnly: 'The English version of this piece is on its way. The original Chinese text is shown below.',
+  },
+}
 
 function t(obj, lang) {
   if (typeof obj === 'string') return obj
   return obj?.[lang] || obj?.zh || ''
 }
 
-function renderMarkdown(md) {
-  if (!md) return null
-  const blocks = md.split(/\n\n+/)
-  return blocks.map((block, i) => {
-    block = block.trim()
-    if (!block) return null
-    if (block.startsWith('## ')) return <h2 key={i}>{block.slice(3)}</h2>
-    if (block.startsWith('### ')) return <h3 key={i}>{block.slice(4)}</h3>
-    if (block.startsWith('> ')) return (
-      <blockquote key={i}><p>{block.slice(2)}</p></blockquote>
-    )
-    if (block === '---') return <hr key={i} />
-    if (block.startsWith('- ') || block.startsWith('* ')) {
-      const items = block.split('\n').filter(l => l.match(/^[-*] /))
-      return <ul key={i}>{items.map((item, j) => <li key={j}>{item.slice(2)}</li>)}</ul>
-    }
-    return <p key={i}>{block.replace(/\n/g, ' ')}</p>
-  })
-}
+export default function Article({ article, newer, older }) {
+  const prefs = usePrefs()
+  const { lang } = prefs
+  const ui = UI[lang]
 
-export default function Article({ article }) {
-  const [lang, setLang] = useState('zh')
+  const hasEN = Boolean(article.content.en && article.content.en.trim())
+  const bodyLang = lang === 'en' && hasEN ? 'en' : 'zh'
+  const content = bodyLang === 'en' ? article.content.en : article.content.zh
 
+  const headings = useMemo(() => extractHeadings(content), [content])
+  const body = useMemo(() => renderMarkdown(content), [content])
+  const minutes = readingMinutes(content, bodyLang)
+
+  const [progress, setProgress] = useState(0)
+  const [active, setActive] = useState(null)
+  const artRef = useRef(null)
+
+  // 閱讀進度條＋目錄目前所在段落
   useEffect(() => {
-    const saved = localStorage.getItem('site_lang')
-    if (saved) setLang(saved)
-  }, [])
+    let raf = 0
+    const update = () => {
+      const el = artRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const total = el.offsetHeight - window.innerHeight
+      setProgress(total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 1)
+      let current = null
+      for (const h of headings) {
+        const node = document.getElementById(h.id)
+        if (node && node.getBoundingClientRect().top < window.innerHeight * 0.3) current = h.id
+      }
+      setActive(current)
+    }
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [headings])
 
-  if (!article) return <div className="art-page"><div className="loading">// 404</div></div>
+  const title = t(article.title, lang)
+  const lede = t(article.lede, lang)
+  const category = t(article.category, lang)
 
-  const content = t(article.content, lang)
+  const toc = headings.length > 1 && (
+    <ol className="toc-list">
+      {headings.map(h => (
+        <li key={h.id} className={active === h.id ? 'on' : ''}>
+          <a href={`#${h.id}`}>{plain(h.text)}</a>
+        </li>
+      ))}
+    </ol>
+  )
 
   return (
     <>
       <Head>
-        <title>{t(article.title, lang)} · {LOGO}</title>
-        <meta name="description" content={t(article.lede, lang)} />
+        <title>{`${title} · ${LOGO}`}</title>
+        <meta name="description" content={lede} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={lede} />
+        <meta property="og:site_name" content={LOGO} />
+        <meta name="twitter:card" content="summary" />
       </Head>
 
       <div className="art-page">
-        <div className="art-nav">
-          <Link href="/" className="art-back">
-            {lang === 'zh' ? '← 返回' : '← Back'}
-          </Link>
-          <span className="art-logo">{LOGO}</span>
+        <div className="progress" aria-hidden="true">
+          <span style={{ transform: `scaleX(${progress})` }} />
         </div>
 
-        <div className="art-body">
-          <div className="art-meta">{article.date} · {t(article.category, lang)}</div>
-          <h1 className="art-title">{t(article.title, lang)}</h1>
-          <p className="art-lede">{t(article.lede, lang)}</p>
-          <div className="art-content">
-            {renderMarkdown(content)}
-          </div>
-          <div className="art-end">
-            <span>Chien-Po</span>
-            <span>{article.date}</span>
-          </div>
-          <div className="art-subscribe">
-            <a
-              className="art-subscribe-link"
-              href="https://liaochienpo.substack.com/subscribe"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {lang === 'zh'
-                ? '我想知道更多，請寄給我 →'
-                : 'I want more — send them to me →'}
-            </a>
-          </div>
+        <header className="art-nav">
+          <Link href="/" className="art-back">{ui.back}</Link>
+          <Link href="/" className="art-logo">{LOGO}</Link>
+          <Controls prefs={prefs} showSize />
+        </header>
+
+        <div className="art-layout">
+          <article className="art-body" ref={artRef}>
+            <div className="art-meta">
+              <span>{article.date}</span>
+              {category && <span>{category}</span>}
+              <span>{ui.minutes(minutes)}</span>
+            </div>
+            <h1 className="art-title">{title}</h1>
+            {lede && <p className="art-lede">{lede}</p>}
+
+            {lang === 'en' && !hasEN && <p className="art-note">{ui.zhOnly}</p>}
+
+            {toc && (
+              <details className="toc-inline">
+                <summary>{ui.toc}</summary>
+                {toc}
+              </details>
+            )}
+
+            <div className="art-content" lang={bodyLang === 'en' ? 'en' : 'zh-Hant'}>
+              {body}
+            </div>
+
+            <div className="art-end">
+              <span>Chien-Po</span>
+              <span>{article.date}</span>
+            </div>
+
+            <div className="art-subscribe">
+              <a className="art-subscribe-link" href={SUBSCRIBE} target="_blank" rel="noopener noreferrer">
+                {ui.subscribe}
+              </a>
+            </div>
+
+            {(newer || older) && (
+              <nav className="art-pager" aria-label={lang === 'zh' ? '其他文章' : 'More writing'}>
+                {newer ? (
+                  <Link href={`/${newer.slug}`} className="pager-card">
+                    <span className="pager-k">← {ui.newer}</span>
+                    <span className="pager-t">{t(newer.title, lang)}</span>
+                  </Link>
+                ) : <span />}
+                {older ? (
+                  <Link href={`/${older.slug}`} className="pager-card pager-older">
+                    <span className="pager-k">{ui.older} →</span>
+                    <span className="pager-t">{t(older.title, lang)}</span>
+                  </Link>
+                ) : <span />}
+              </nav>
+            )}
+          </article>
+
+          {toc && (
+            <aside className="toc-side" aria-label={ui.toc}>
+              <div className="toc-label">{ui.toc}</div>
+              {toc}
+              <a className="toc-top" href="#" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
+                ↑ {ui.top}
+              </a>
+            </aside>
+          )}
         </div>
       </div>
     </>
@@ -92,9 +194,17 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const article = await getArticleBySlug(params.slug)
+  const [article, list] = await Promise.all([getArticleBySlug(params.slug), getArticles()])
+  if (!article) return { notFound: true, revalidate: 60 }
+
+  const i = list.findIndex(a => a.slug === params.slug)
+  const pick = a => (a ? { slug: a.slug, title: a.title } : null)
   return {
-    props: { article: article || null },
+    props: {
+      article,
+      newer: i > 0 ? pick(list[i - 1]) : null,
+      older: i >= 0 && i < list.length - 1 ? pick(list[i + 1]) : null,
+    },
     revalidate: 60,
   }
 }
