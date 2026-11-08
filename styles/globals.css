@@ -380,3 +380,14 @@ html[data-lang='en'] .pager-t { font-family: var(--serif-en); font-weight: 500; 
 }
 
 .loading { display: flex; align-items: center; justify-content: center; min-height: 50vh; font-family: var(--mono); font-size: 14px; color: var(--muted); letter-spacing: 0.1em; }
+
+/* 密碼文章：解鎖前的輸入框 */
+.art-lock { border: 1px solid var(--line); background: var(--paper); padding: 1.5rem 1.6rem; margin: 0.5rem 0 2.5rem; }
+.art-lock-title { font-weight: 600; color: var(--ink); margin: 0 0 0.35rem; }
+.art-lock-hint { color: var(--muted); font-size: 0.95em; margin: 0 0 1rem; }
+.art-lock-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.art-lock-row input { flex: 1 1 12rem; min-width: 0; font: inherit; padding: 0.55rem 0.8rem; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; }
+.art-lock-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.art-lock-row button { font: inherit; padding: 0.55rem 1.1rem; background: var(--ink); color: var(--bg); border: 1px solid var(--ink); border-radius: 4px; cursor: pointer; }
+.art-lock-row button:disabled { opacity: 0.6; cursor: wait; }
+.art-lock-wrong { color: var(--accent); font-size: 0.92em; margin: 0.7rem 0 0; }
